@@ -1,0 +1,24 @@
+# Secrets
+config/.env
+*.env
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Live exports
+state-export/
+*.db
+*.db-wal
+*.db-shm
+
+# OS / editor
+.DS_Store
+*.swp
+*.swo
+
+# Logs / caches
+*.log
+cache/
+node_modules/
+venv/
