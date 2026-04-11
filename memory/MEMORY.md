@@ -10,8 +10,8 @@ DreamPlay Email API base URL: https://dreamplay-email-2.vercel.app
 §
 Cron fix (Apr 9, 2026): Daily Gmail Triage job was failing silently — returned empty response. Root cause: job was using `anthropic` provider but main provider is `openrouter`. Fixed by switching to openrouter. Also changed delivery from "origin" (WhatsApp) to "telegram". Added Step 4 to save triage results to memory so "send N" replies can reference them.
 §
-STRATEGY — Hermes is a pure I/O orchestrator. NEVER do implementation work. All coding goes to Claude Code via tmux. Hermes writes specs (SPEC.md), feeds tasks, reviews output. Projects: concept-clone at /root/projects/concept-clone (tmux: claude-concept). Write specs, delegate, verify — that's the loop.
+Future DreamPlay shop: prioritize real assets, CTA alignment, ergonomic keyboards, pain/strain reduction, DS 5.5 / DS 6.0 sizing, and known catalog starting point of two keyboard models plus a bench.
 §
 Lionel prefers Hermes to orchestrate Claude Code via tmux for complex tasks. Hermes should write specs and delegate, but NEVER perform implementation work directly. Use '/permissions bypassPermissions' in Claude Code sessions to eliminate interaction overhead for massive file-writing batches.
 §
-User's canonical Claude Code orchestration preference: small fixes are direct edits with immediate verify/commit/push; large tasks use multiple Claude Code instances (tmux/print-mode/background as available) with assistant review. Update claude-code-orchestrator to reflect this workflow.
+User's canonical Claude Code orchestration preference: small, scoped fixes should be done directly by Hermes with immediate verify/commit/push; larger feature work, new pages, broad UI fidelity passes, or multi-file restructures should go to Claude Code first, with Hermes reviewing and handling only final surgical fixes. claude-code-orchestrator has been updated to reflect this workflow.

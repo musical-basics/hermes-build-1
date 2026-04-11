@@ -25,15 +25,49 @@ This is the single source of truth for Claude Code orchestration. If overlapping
 
 ## Current Preferred Execution Pattern
 - For easy one-off requests and surgical fixes, Hermes may edit directly, then verify, commit, and push immediately.
+- If a recent Claude Code UI/CSS change causes an obvious visual regression, do not reflexively launch another broad Claude run. First inspect the live result directly (browser + DOM/CSS measurements), identify the exact bad commit/change, and if needed revert that narrow commit immediately to restore a known-good state.
+- After a revert, prefer the smallest safe direct fix yourself when the issue is a narrow layout/CSS problem (for example padding, min-height, link target, overflow/clipping) and verify with build plus visual review before pushing.
 - For larger changes, use persistent Claude Code tmux sessions when available (for example `claude-concept` for `/root/projects/concept-clone`).
+- For broader/heavier fidelity passes in DreamPlay concept-clone, explicitly set Claude Code to Opus with high effort instead of relying on default model/effort.
+- When Claude Code introduces a visible UI regression, do not iterate blindly on top of the broken state. First identify the offending commit, revert it cleanly if needed, verify the site is back to the last known-good state, then re-approach the issue with the narrowest possible fix.
+- For narrow CSS/layout bugs discovered during review (for example clipping, padding, height issues, active-state polish, anchoring, or overlay/scrim behavior in a single existing component), prefer a direct Hermes fix over a new broad Claude pass when the change is confined to a few files and can be immediately browser-verified. Make the smallest targeted change, verify visually plus with build, and push only after confirming the regression is gone.
 - For bigger tasks, prefer multiple Claude Code instances/subtasks when the work can be cleanly partitioned, then review and verify each result before finalizing.
-- Always push Claude Code work so Lionel can inspect it on the live site.
+- When Hermes is about to hand a substantial task to Claude Code, first write the exact prompt/spec into a markdown file inside the repo if useful, show Lionel the prompt verbatim on request, and get approval before launching the run.
+- For broader/heavier Claude Code implementation passes (for example multi-page fidelity sweeps or larger shared UI refinements), do not leave model/effort implicit. Explicitly launch Claude Code with Opus and `--effort high` unless Lionel requests a different setting.
+- Always push Claude Code work so Lionel can inspect it.
+- For DreamPlay concept-clone, pushing is not optional housekeeping: after Claude finishes, Hermes should push immediately so Lionel can see the live site, and prompts should ask Claude to push after each meaningful change when the repo/workflow permits.
 - Do not wait for Lionel to sign off on every small feature. Keep making incremental changes, pushing as you go, and let him review the accumulated result before final sign-off.
-- If Claude Code is doing an experiment, alternate concept, or test implementation, create a new page/route for A/B testing instead of modifying the existing page in place.
+- For concurrent Claude Code runs, split by non-overlapping file domains first (for example shared homepage/header work vs `/shop`-only work), and keep a short note of each run's lane and session/process ID so Hermes can monitor them safely.
+- If a combined UI refinement prompt mixes page-layout work with header/nav/megamenu behavior, do not keep them bundled. Split into separate Claude runs (for example page lane vs nav lane) so one visual system cannot destabilize the other and each result is easier to review or revert.
+
 - For UI/component experiments, treat the A/B route as an isolated sandbox for the targeted system only (for example header/nav only, not the whole homepage shell). When the experiment is approved, merge only that targeted component/system into the real page.
+- If multiple Claude Code runs are active on related UI work, split them by non-overlapping file domains first (for example shared homepage/header work vs `/shop`-only work).
+- Before each new UI fidelity pass, Hermes should compare the local result against the live reference, write a short prioritized review doc in the repo, and use that doc as the source of truth for the next Claude prompt.
+- If the user wants to review the prompt first, Hermes should write the exact Claude prompt to a repo markdown file, send the prompt text verbatim, wait for approval, then launch it unchanged unless the user requests edits.
+- When Claude Code is already running on one implementation lane, Hermes should keep making progress by independently reviewing the live reference in parallel and writing supplemental review docs (for example a collection-page review or a megamenu-specific review) so the next Claude pass can start immediately from grounded notes.
 - If multiple Claude Code runs are active on related UI work, verify whether they touch the same files before pushing. If an overlapping run is still modifying the same files, pause/kill/freeze it first, revert any accidental partial splice, then push the clean increment.
+- If a Claude Code run stops due to max-turns or otherwise exits mid-task, do NOT immediately discard the work. First inspect `git diff`, run verification (`npm run lint`, `npm run build`, or project-equivalent), and assess whether the partial changes are coherent.
+- When salvageable partial work exists, launch a continuation prompt that explicitly tells Claude Code to continue from the existing local diff, not start over, and to stay scoped to the already-modified files unless absolutely necessary. This continuation pattern is preferred over rewriting the task from scratch.
+- If a broader Claude run spends several minutes with no visible `git diff` changes and no pushed commit, treat it as likely stuck/overthinking rather than waiting indefinitely. Prefer killing it and splitting the work into 2-3 narrower Claude runs by file/domain (for example reveals vs card/media polish vs header integration).
+- When splitting Claude runs, monitor for overlapping file edits before accepting all results. If multiple runs touched the same files, do a salvage pass yourself: inspect the combined diff, verify visually plus with lint/build, keep the safe subset, discard broken reveal/animation logic, then commit/push the cleaned result.
+- For Lionel's live-review workflow, pushing is part of completion, not an optional afterthought. In Claude prompts for meaningful UI work, explicitly instruct Claude to push after each meaningful change when safe, and Hermes must still push immediately once a Claude run finishes if anything remains unpushed so Lionel can review the live site.
+- If a broad UI/interactivity pass appears stuck (long runtime with no file changes or commits), split it into smaller non-overlapping Claude Code lanes (for example reveal/motion vs card/media vs header integration) instead of waiting indefinitely.
+- After split Claude runs, do a salvage pass before launching anything new: inspect local diffs, run verification, and keep only the safe subset. Watch especially for JS/CSS reveal systems that can leave content invisible at runtime even when lint/build pass; if the page looks blank or sections disappear, revert the broken reveal changes and keep the safer hover/active-state polish.
 - Before large file-writing batches in Claude Code, run `/permissions bypassPermissions` when the environment permits it.
+- For Lionel's live-site review workflow, Claude prompts for meaningful multi-step UI passes should explicitly instruct Claude Code to push after each meaningful change/commit, not only at the end.
 - Default loop for larger work: write spec -> delegate to Claude Code -> verify output -> push so Lionel can inspect.
+- If a Claude Code UI pass creates an obvious visual regression, do not stack more work on top of it. Inspect the bad commit/diff immediately, revert the smallest offending commit to restore a reviewable state, verify the site is sane again, then re-approach with a narrower prompt or a direct surgical fix.
+- For tiny, low-risk, CSS-only follow-ups after a Claude run (for example increasing a min-height or adjusting spacing), Hermes should prefer a direct edit + build + visual verification instead of launching another full Claude pass.
+- Explicit split for Lionel's workflow: small, scoped fixes should be done directly by Hermes (for example a wrong link target, a single-component CSS/layout bug, a small routing cleanup, or a narrow post-review polish). Larger feature work, broader UI fidelity passes, new pages, or multi-file restructures should go to Claude Code first, then Hermes reviews and handles only the final surgical fixes.
+- If a direct Hermes fix starts turning into a messy multi-step implementation/debugging session rather than a surgical change, stop and hand the broader pass back to Claude Code instead of grinding through it manually.
+- Before high-risk UI transitions in live-review repos (for example converting a reference clone homepage into a branded production homepage), create explicit backup branches at the important pre-refactor states instead of relying only on linear git history. Good pattern: one branch for the last full reference/theme baseline and one branch for the last pre-branding structural split. Push both branches to origin and write a short repo markdown note documenting what each backup branch preserves and when to use it.
+- For megamenus/dropdowns specifically: prefer preserving structure/overflow behavior and fixing clipping with container sizing first. Avoid "overflow: visible" or layout-unlocking changes unless visually verified, because they can fragment the panel and break anchoring.
+- Always visually verify high-risk UI changes (browser review or screenshot inspection) before treating them as done.
+- In DreamPlay concept-clone specifically, do not trust a "blank page" screenshot at face value when scroll-reveal systems are involved. Browser accessibility snapshots may still show the content while vision screenshots look empty because cards/sections are stuck at `opacity: 0`. When that happens, inspect computed styles in the browser (`opacity`, `transform`, reveal classes) before concluding the page is actually blank.
+- After Claude creates a new page/route or introduces new remote media, verify the page in the local browser, not just with `npm run build`. Runtime-only failures can still blank the page even when build passes (for example `next/image` remote host misconfiguration causing a white screen). Use browser inspection / console to catch these before reporting success.
+- After pushing a UI/content cleanup, if the live browser still appears to show the old nav/footer/copy, do not immediately assume the push failed. First verify `git log`/push status, then reload the deployed page with a cache-busting query string such as `?v=<short-commit>` before judging whether the deployment actually updated.
+- If Claude leaves behind backup or generated build folders (for example `.next-old/`, `.next-build/`, `.next-verify/`, `tmp/`) and lint suddenly explodes with thousands of errors from generated files, do not assume the feature work is broken. First inspect `git status`, revert unintended config edits (for example `tsconfig.json`), remove the generated artifact folders, and rerun lint/build before judging the implementation.
+- When a combined Claude UI run mixes two distinct lanes (for example page layout work and header/nav behavior) and starts failing or getting muddled, split it into separate Claude runs by non-overlapping file domains and monitor them independently.
 - Hermes should avoid direct implementation on big code tasks when Claude Code is the better tool.
 - Hermes should avoid direct implementation on big code tasks when Claude Code is the better tool.
 
@@ -44,9 +78,30 @@ This is the single source of truth for Claude Code orchestration. If overlapping
 - If a project has both advisory and implementation contexts, keep the implementation session attached to `/root/projects/...` and keep advisory context in `/root/repos/...`.
 - When starting or reusing a session for heavy work, set `/effort max` unless the task is intentionally lightweight.
 - Before major write-heavy tasks, set `/permissions bypassPermissions` when the environment permits it.
-- Important environment finding: when running as root, Claude Code may refuse `bypassPermissions` / dangerous-skip-permissions modes. In that case, do not fight the TUI; fall back to `claude -p` one-shot runs with explicit `--allowedTools` and orchestrate them via Hermes background processes.
-- After Claude finishes, Hermes verifies outputs before reporting back to Lionel.
-- Root-safe fallback: use multiple parallel `claude -p` runs with explicit `--allowedTools` and background/process monitoring instead of tmux+bypass.
+- Practical tmux control commands worth reusing:
+  - create detached session: `tmux new-session -d -s claude-<project>`
+  - attach later: `tmux attach -t claude-<project>`
+  - list sessions: `tmux ls`
+  - kill session: `tmux kill-session -t claude-<project>`
+- Practical non-root launch pattern inside tmux for this environment:
+  - `tmux new-session -d -s claude-concept`
+  - `tmux send-keys -t claude-concept 'su - claude -c '\''export PATH="$HOME/bin:/opt/claude-runtime/bin:$PATH" && cd /home/claude/projects/concept-clone && claude --permission-mode bypassPermissions'\''' C-m`
+- Once attached, common setup commands are:
+  - `/effort max`
+  - `/permissions bypassPermissions`
+- Important environment finding: when running as root, Claude Code may refuse `bypassPermissions` / dangerous-skip-permissions modes. Do not waste time retrying the same root launch flags.
+- Preferred durable fix: create or reuse a dedicated non-root coding user (for example `claude`) with its own home and workspace, then run Claude Code there with `--permission-mode bypassPermissions`.
+- Safe split architecture: keep Hermes/orchestration under root if needed, but give the non-root Claude user a separate workspace clone (for example `/home/claude/projects/<repo>`) and a shared runtime on a root-readable path such as `/opt/claude-runtime/bin/claude`.
+- Minimal migration pattern that worked here: create user `claude`, copy Claude auth/config (`~/.claude`, `~/.claude.json`) plus git identity/credentials into `/home/claude`, expose the Claude runtime outside `/root` (for example copy `/root/.hermes/node` to `/opt/claude-runtime`), add `/opt/claude-runtime/bin` to the user's PATH, and clone the active repo into `/home/claude/projects/...`.
+- Recommended launch pattern for heavy non-root runs: `su - claude -c 'export PATH="$HOME/bin:/opt/claude-runtime/bin:$PATH" && cd /home/claude/projects/<repo> && claude ... --permission-mode bypassPermissions'`.
+- Verify the setup by running as the non-root user: `claude --version`, `git status`, and a tiny `claude -p` call with `--permission-mode bypassPermissions`.
+- Important tradeoff of the split-workspace approach: the non-root clone can drift behind `origin/main` if Hermes/root or another workspace keeps pushing. Before pushing results from the non-root workspace, always run `git status -sb`. If the branch is ahead and behind, `git fetch origin && git rebase origin/main`, resolve conflicts, rerun verification, then push.
+- If Hermes/root needs to inspect or commit inside the non-root Claude workspace clone, git may reject the repo as dubious ownership. Fix that once with: `git config --global --add safe.directory /home/claude/projects/<repo>` before continuing.
+- Claude Code verification runs may leave temporary artifacts in the repo (for example `.next-build/`, `.next-verify/`, `tmp/`) and may even patch `tsconfig.json` to include those temp type paths. Before committing, explicitly inspect `git status -sb` and `git diff`; revert unintended config changes and remove temp build artifacts so only real feature files are shipped.
+- In split-ownership DreamPlay concept-clone workspaces, `npm run build` under user `claude` can fail with `EACCES` inside `.next/` if a prior root run touched it. If that happens, fix ownership of `.next` first (for example `chown -R claude:claude /home/claude/projects/concept-clone/.next`) and rerun build instead of assuming the feature is broken.
+- Another split-ownership pitfall: git commits from the non-root `claude` user can fail with `insufficient permission for adding an object to repository database .git/objects` if earlier root-side work created root-owned object directories/files under `.git/objects`. Diagnose with `find /home/claude/projects/<repo>/.git -not -user claude -printf '%u %g %m %p\n' | head -50`. Durable fix: `chown -R claude:claude /home/claude/projects/<repo>/.git` before retrying the commit/push.
+- In the same split-ownership setup, `git commit` under user `claude` can also fail with `insufficient permission for adding an object to repository database .git/objects` if root created git objects earlier. If that happens, fix repo metadata ownership first with `chown -R claude:claude /home/claude/projects/concept-clone/.git`, then retry the commit/push.
+- Only if a non-root setup is not available should Hermes fall back to root-safe `claude -p` runs without bypass permissions, using explicit `--allowedTools` and background/process monitoring.
 - After Claude finishes, Hermes verifies outputs before reporting back to Lionel.
 
 ## Routing
@@ -107,8 +162,10 @@ Always include:
 - "After completing the task, update any relevant context files in this repo."
 
 ## Git Rules
-- Branch before multi-file changes: `git checkout -b hermes/[task]`
-- Never push to main without approval.
+- Follow the repo/user workflow, not a blanket rule.
+- For Lionel's active DreamPlay concept-clone work, small and medium approved increments may be committed and pushed directly to `main` so he can review them live.
+- For repos that require branch workflow, branch before multi-file changes: `git checkout -b hermes/[task]`.
+- If Lionel has not approved direct-to-main momentum for that repo, do not push to `main` without approval.
 - `git checkout .` to revert rejected changes.
 
 ## Hard Rules — Learn From Mistakes

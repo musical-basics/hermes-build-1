@@ -32,4 +32,6 @@ Example:
 - Did Claude change the intended files only?
 - Do builds/tests/lint pass if relevant?
 - Does the output match the spec?
+- For UI fidelity work, did Hermes compare local vs live reference and capture the remaining ranked gaps in a repo markdown review doc before the next pass?
+- If parallel Claude runs were used, were they partitioned by file domain to avoid overlap?
 - Are any follow-up fixes still needed before reporting success?
